@@ -1,0 +1,97 @@
+
+restore_from: "neuphonic/neutts-air"
+codebook_size: 65536  # NeuCodec codebook size
+
+# Training Arguments
+# -----------------------------------------------------------------------------
+save_root: "./checkpoints"
+run_name: "myvie-tts-finetune"
+
+# Sequence Length
+max_seq_len: 2048
+
+# Learning Rate & Scheduler
+lr: 1e-5
+lr_scheduler_type: "cosine"
+warmup_ratio: 0.03
+
+# Batch Size & Gradient Accumulation
+per_device_train_batch_size: 16
+gradient_accumulation_steps: 4
+
+
+# Training Steps
+max_steps: 100000
+logging_steps: 100
+save_steps: 10000
+eval_steps: 10000
+
+# Precision & Optimization
+bf16: true
+fp16: false
+torch_compile: true
+gradient_checkpointing: true
+
+
+fsdp: "shard_grad_op"
+
+fsdp_config:
+  fsdp_version: 1
+  min_num_params: 
+  transformer_layer_cls_to_wrap:
+    - "NeuttsBlock"
+    - "TransformerBlock"
+  backward_prefetch: "backward_pre"
+  forward_prefetch: false
+  limit_all_gathers: false
+  use_orig_params: true
+  sync_module_states: true
+
+
+# Data Loading
+dataloader_num_workers: 8
+dataloader_drop_last: true
+
+# Random Seed
+seed: 1337
+
+# Dataset Configuration
+# -----------------------------------------------------------------------------
+dataset:
+  # Sử dụng dataset local (JSON file)
+  train_file: "./data/train_dataset_encoded"
+
+  
+  # Filtering options
+  min_text_length: 5
+  max_text_length: 1000
+  min_audio_codes: 10
+  max_audio_codes: 1500
+
+-----------------------------------
+vietnamese:
+
+  normalize_text: true
+  
+  use_phoneme_dict: true
+  phoneme_dict_path: "./utils/phoneme_dict.json"
+  
+  add_language_token: false
+  language_token: "<|VI|>"
+
+logging:
+  report_to: "tensorboard"
+  wandb_project: "myvie-tts"
+  wandb_entity: null
+
+advanced:
+  freeze_embeddings: false
+  freeze_layers: 0
+  
+  use_lora: false
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  lora_target_modules: ["q_proj", "v_proj"]
+  
+  
